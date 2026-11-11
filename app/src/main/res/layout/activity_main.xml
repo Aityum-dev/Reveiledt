@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0E1020"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="22dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Réveil EDT"
+            android:textColor="#E8E9F5"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/statusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:id="@+id/statusTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="#F0FFFFFF"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/checks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="vertical" />
+
+        <TextView
+            style="@style/Label"
+            android:text="Lien iCal de ton emploi du temps" />
+
+        <EditText
+            android:id="@+id/url"
+            style="@style/Field"
+            android:hint="https://ade.univ-....fr/jsp/custom/modules/plannings/anonymous_cal.jsp?..."
+            android:inputType="textUri" />
+
+        <TextView
+            style="@style/Label"
+            android:text="Réveil combien de minutes avant le 1er cours" />
+
+        <EditText
+            android:id="@+id/offset"
+            style="@style/Field"
+            android:inputType="number"
+            android:maxLength="3" />
+
+        <Switch
+            android:id="@+id/enabled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Réveil actif"
+            android:textColor="#E8E9F5"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:backgroundTint="#F5B14C"
+            android:text="Enregistrer et synchroniser"
+            android:textAllCaps="false"
+            android:textColor="#1A1205"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/test"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:backgroundTint="#2A2E4D"
+            android:text="Tester la sonnerie (dans 10 s)"
+            android:textAllCaps="false"
+            android:textColor="#E8E9F5" />
+
+        <TextView
+            style="@style/Label"
+            android:text="Prochains réveils" />
+
+        <TextView
+            android:id="@+id/preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:lineSpacingExtra="6dp"
+            android:textColor="#C9CCE6"
+            android:textSize="14sp" />
+    </LinearLayout>
+</ScrollView>
