@@ -1,6 +1,6 @@
 # Réveil EDT (Android)
 
-Appli Android qui lit l'emploi du temps iCal de l'université et règle tout seule le réveil : premier cours du jour moins X minutes. Aucun serveur, chaque téléphone lit directement le site de son université.
+Appli Android qui lit l'emploi du temps iCal de l'université et règle tout seule un ou plusieurs réveils : premier cours du jour moins X minutes. Aucun serveur, chaque téléphone lit directement le site de son université.
 
 ## Compiler l'APK
 
@@ -15,7 +15,7 @@ Tests de la logique de calcul : `./gradlew test` (ou clic droit sur `PlannerTest
 
 ## Première configuration (chaque personne)
 
-1. Coller le lien iCal (voir plus bas), régler les minutes, **Enregistrer et synchroniser**
+1. Coller le lien iCal (voir plus bas), **Enregistrer le lien et synchroniser**, puis ajouter ses réveils dans **Mes réveils**
 2. Corriger chaque bouton orange ⚠ qui s'affiche (notifications, alarmes, plein écran, batterie, volume)
 3. **Tester la sonnerie**, verrouiller le téléphone, vérifier que ça sonne et que l'écran s'allume
 
@@ -34,13 +34,24 @@ Dans ADE : choisir son groupe, icône **Exporter l'agenda** en bas à gauche, me
 
 Le réveil utilise `setAlarmClock`, l'API des vraies applis de réveil : il sonne même en mode Doze, en silencieux (canal alarme) et affiche l'icône réveil dans la barre d'état.
 
-## Notification permanente
+## Plusieurs réveils
 
+Dans **Mes réveils**, ajoute autant de réveils que tu veux (10 max), en temps avant le 1er cours : `1h30`, `1h`, `40`... Chaque réveil se calcule indépendamment, ✕ pour en supprimer un.
+
+## Couper un jour précis
+
+Dans **Cette semaine**, chaque jour de cours a un bouton **🔔 Sonne** / **🔕 Coupé**. Un jour coupé ne fait sonner aucun réveil (malade, grève...). Le réglage s'efface tout seul une fois le jour passé.
+
+## Notifications
+
+**Notification permanente** (désactivable dans Réglages) :
 - 🟢 **Verte** : réveil programmé et EDT vérifié il y a moins de 12h
-- 🔴 **Rouge** : pas de lien, alarmes non autorisées, volume des alarmes à 0, aucun cours trouvé, calendrier illisible, ou EDT pas vérifié depuis plus de 12h (le réveil reste quand même programmé avec la dernière version connue)
+- 🔴 **Rouge** : pas de lien, aucun réveil configuré, alarmes non autorisées, volume des alarmes à 0, aucun cours trouvé, calendrier illisible, ou EDT pas vérifié depuis plus de 12h (le réveil reste programmé avec la dernière version connue)
 - ⚪ **Grise** : réveil désactivé volontairement
 
 Si on la balaie, elle revient.
+
+**Notification de 19h** (désactivable) : après la synchro du soir, une petite notif confirme ✅ les réveils de demain, ou prévient ⚠️ en cas de problème (pas de réseau, permission manquante...).
 
 ## Limites connues
 

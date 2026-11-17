@@ -1,6 +1,7 @@
 package fr.aityum.reveiledt
 
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -11,7 +12,12 @@ import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 
-data class Event(val start: ZonedDateTime, val summary: String)
+data class Event(
+    val start: ZonedDateTime,
+    val summary: String,
+    val end: ZonedDateTime? = null,
+    val location: String = "",
+)
 
 class IcalException(message: String) : Exception(message)
 
@@ -61,6 +67,8 @@ object Ical {
             if (ev.prop("STATUS")?.value?.trim().equals("CANCELLED", true)) continue
             val start = ev.prop("DTSTART")?.let { parseTime(it, zone) } ?: continue
             val summary = unescape(ev.prop("SUMMARY")?.value ?: "")
+            val location = unescape(ev.prop("LOCATION")?.value ?: "")
+            val duration = ev.prop("DTEND")?.let { parseTime(it, zone) }?.let { Duration.between(start, it) }
             val rrule = ev.prop("RRULE")
 
             val starts = if (rrule == null || ev.prop("RECURRENCE-ID") != null) {
@@ -79,7 +87,10 @@ object Ical {
                 }
             }
             starts.filter { !it.isBefore(from) && it.isBefore(to) }
-                .forEach { out += Event(it.withZoneSameInstant(zone), summary) }
+                .forEach {
+                    val s = it.withZoneSameInstant(zone)
+                    out += Event(s, summary, duration?.let { d -> s.plus(d) }, location)
+                }
         }
         return out.sortedBy { it.start }
     }

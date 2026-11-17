@@ -8,7 +8,11 @@ import androidx.core.content.ContextCompat
 /** Déclenché par AlarmManager à l'heure du réveil. */
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        ContextCompat.startForegroundService(ctx, Intent(ctx, AlarmService::class.java))
+        ContextCompat.startForegroundService(
+            ctx,
+            Intent(ctx, AlarmService::class.java)
+                .putExtra(AlarmScheduler.EXTRA_INFO, intent.getStringExtra(AlarmScheduler.EXTRA_INFO)),
+        )
     }
 }
 
@@ -19,7 +23,7 @@ class StatusReceiver : BroadcastReceiver() {
             ACTION_REPOST -> StatusNotif.show(ctx)
             ACTION_SYNC -> Engine.syncSoon(ctx)
             ACTION_DAILY -> {
-                Engine.syncSoon(ctx)
+                Engine.syncDaily(ctx)
                 AlarmScheduler.scheduleDaily(ctx)
             }
         }

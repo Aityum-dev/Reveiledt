@@ -10,11 +10,13 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.UnknownHostException
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
@@ -28,7 +30,7 @@ object Engine {
     private fun zone(): ZoneId = ZoneId.systemDefault()
     private fun now(): ZonedDateTime = ZonedDateTime.now(zone())
 
-    /** Télécharge l'EDT, met à jour le cache, reprogramme le réveil. Renvoie false si le téléchargement a échoué. */
+    /** Télécharge l'EDT, met à jour le cache, reprogramme les réveils. Renvoie false si le téléchargement a échoué. */
     fun sync(ctx: Context): Boolean = synchronized(lock) {
         val p = Prefs(ctx)
         val url = p.url
@@ -49,42 +51,62 @@ object Engine {
         ok
     }
 
-    /** Recalcule le réveil à partir du cache, sans réseau. */
+    /** Recalcule les réveils à partir du cache, sans réseau. */
     fun recompute(ctx: Context) = synchronized(lock) { recomputeLocked(ctx, Prefs(ctx)) }
 
+    fun setOffsets(ctx: Context, offsets: List<Int>) = synchronized(lock) {
+        val p = Prefs(ctx)
+        p.offsets = offsets.take(AlarmScheduler.MAX_ALARMS)
+        recomputeLocked(ctx, p)
+    }
+
+    fun toggleSkip(ctx: Context, day: LocalDate) = synchronized(lock) {
+        val p = Prefs(ctx)
+        p.skipped = if (day in p.skipped) p.skipped - day else p.skipped + day
+        recomputeLocked(ctx, p)
+    }
+
     private fun recomputeLocked(ctx: Context, p: Prefs) {
+        val now = now()
+        val today = now.toLocalDate()
+        if (p.skipped.any { it.isBefore(today) }) p.skipped = p.skipped.filterTo(mutableSetOf()) { !it.isBefore(today) }
+
         val cache = p.cache
-        val plan = if (p.enabled && cache != null) {
+        val events = if (p.enabled && cache != null) {
             try {
-                Planner.next(parse(cache), p.offsetMin, now())
+                parse(cache)
             } catch (e: Exception) {
                 p.lastError = describe(e)
                 null
             }
         } else null
 
-        if (plan != null) {
-            val at = plan.alarm.toInstant().toEpochMilli()
-            AlarmScheduler.set(ctx, at)
-            p.alarmAt = at
-            p.classAt = plan.firstClass.toInstant().toEpochMilli()
-            p.summary = plan.summary
-        } else {
-            AlarmScheduler.cancel(ctx)
-            p.alarmAt = 0
-            p.classAt = 0
-            p.summary = null
+        val skip = p.skipped
+        val plans = p.offsets.take(AlarmScheduler.MAX_ALARMS).map { off ->
+            events?.let { Planner.next(it, off, now, skip) }
         }
+        AlarmScheduler.cancelAll(ctx)
+        plans.forEachIndexed { i, plan ->
+            if (plan != null) {
+                val info = "1er cours à ${StatusNotif.hm(plan.firstClass)} · ${plan.summary}"
+                AlarmScheduler.set(ctx, i, plan.alarm.toInstant().toEpochMilli(), info)
+            }
+        }
+
+        val first = plans.filterNotNull().minByOrNull { it.alarm }
+        p.alarmAt = first?.alarm?.toInstant()?.toEpochMilli() ?: 0
+        p.classAt = first?.firstClass?.toInstant()?.toEpochMilli() ?: 0
+        p.summary = first?.summary
+        p.alarmCount = plans.count { it != null && it.firstClass == first?.firstClass }
         StatusNotif.show(ctx)
     }
 
-    /** Les prochains jours de cours, pour l'aperçu dans l'app. */
-    fun preview(ctx: Context): List<Plan> {
+    /** Les 7 prochains jours, avec tous les cours et les heures de réveil. */
+    fun week(ctx: Context): List<DayView> {
         val p = Prefs(ctx)
         val cache = p.cache ?: return emptyList()
-        val now = now()
-        return runCatching { Planner.daily(parse(cache), p.offsetMin).filter { it.alarm.isAfter(now) } }
-            .getOrDefault(emptyList())
+        val events = runCatching { parse(cache) }.getOrNull() ?: return emptyList()
+        return Planner.week(events, p.offsets, now().toLocalDate(), p.skipped)
     }
 
     private fun parse(text: String): List<Event> {
@@ -133,11 +155,28 @@ object Engine {
                 .build(),
         )
     }
+
+    /** Synchro de 19h : sans contrainte réseau, pour que la notif de vérification arrive même hors ligne. */
+    fun syncDaily(ctx: Context) {
+        WorkManager.getInstance(ctx).enqueueUniqueWork(
+            "daily", ExistingWorkPolicy.REPLACE,
+            OneTimeWorkRequestBuilder<SyncWorker>().setInputData(workDataOf(SyncWorker.DAILY to true)).build(),
+        )
+    }
 }
 
 class SyncWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): Result {
         val ok = Engine.sync(applicationContext)
+        if (inputData.getBoolean(DAILY, false)) {
+            StatusNotif.daily(applicationContext, ok)
+            if (!ok) Engine.syncSoon(applicationContext) // réessaie dès que le réseau revient
+            return Result.success()
+        }
         return if (ok || runAttemptCount >= 5) Result.success() else Result.retry()
+    }
+
+    companion object {
+        const val DAILY = "daily"
     }
 }

@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="22dp">
+        android:padding="20dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -20,11 +20,12 @@
             android:textSize="28sp"
             android:textStyle="bold" />
 
+        <!-- État -->
         <LinearLayout
             android:id="@+id/statusCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="16dp"
             android:orientation="vertical"
             android:padding="20dp">
 
@@ -49,8 +50,86 @@
             android:id="@+id/checks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
             android:orientation="vertical" />
+
+        <!-- Cette semaine -->
+        <TextView
+            style="@style/Section"
+            android:text="Cette semaine" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Touche 🔔 pour couper le réveil un jour précis (malade, grève...)"
+            android:textColor="#8A8FB3"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:id="@+id/week"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <!-- Mes réveils -->
+        <TextView
+            style="@style/Section"
+            android:text="Mes réveils" />
+
+        <LinearLayout
+            android:id="@+id/alarms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/newOffset"
+                style="@style/Field"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:hint="ex : 1h30, 1h, 40"
+                android:imeOptions="actionDone"
+                android:inputType="text"
+                android:maxLength="6" />
+
+            <Button
+                android:id="@+id/addOffset"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="#F5B14C"
+                android:text="+ Ajouter"
+                android:textAllCaps="false"
+                android:textColor="#1A1205"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Réglages -->
+        <TextView
+            style="@style/Section"
+            android:text="Réglages" />
+
+        <Switch
+            android:id="@+id/enabled"
+            style="@style/Toggle"
+            android:text="Réveil actif" />
+
+        <Switch
+            android:id="@+id/persistent"
+            style="@style/Toggle"
+            android:text="Notification permanente (verte / rouge)" />
+
+        <Switch
+            android:id="@+id/dailyNotif"
+            style="@style/Toggle"
+            android:text="Notification de vérification à 19h" />
 
         <TextView
             style="@style/Label"
@@ -62,32 +141,13 @@
             android:hint="https://ade.univ-....fr/jsp/custom/modules/plannings/anonymous_cal.jsp?..."
             android:inputType="textUri" />
 
-        <TextView
-            style="@style/Label"
-            android:text="Réveil combien de minutes avant le 1er cours" />
-
-        <EditText
-            android:id="@+id/offset"
-            style="@style/Field"
-            android:inputType="number"
-            android:maxLength="3" />
-
-        <Switch
-            android:id="@+id/enabled"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Réveil actif"
-            android:textColor="#E8E9F5"
-            android:textSize="16sp" />
-
         <Button
             android:id="@+id/save"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="12dp"
             android:backgroundTint="#F5B14C"
-            android:text="Enregistrer et synchroniser"
+            android:text="Enregistrer le lien et synchroniser"
             android:textAllCaps="false"
             android:textColor="#1A1205"
             android:textStyle="bold" />
@@ -96,23 +156,11 @@
             android:id="@+id/test"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="24dp"
             android:backgroundTint="#2A2E4D"
             android:text="Tester la sonnerie (dans 10 s)"
             android:textAllCaps="false"
             android:textColor="#E8E9F5" />
-
-        <TextView
-            style="@style/Label"
-            android:text="Prochains réveils" />
-
-        <TextView
-            android:id="@+id/preview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:lineSpacingExtra="6dp"
-            android:textColor="#C9CCE6"
-            android:textSize="14sp" />
     </LinearLayout>
 </ScrollView>

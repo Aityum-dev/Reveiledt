@@ -99,6 +99,66 @@ class PlannerTest {
         assertTrue(runCatching { parse(c, now) }.exceptionOrNull() is IcalException)
     }
 
+    @Test fun severalAlarmsAreIndependent() {
+        // 07:15, cours à 08:30 : -1h30 (07:00) est passé -> lendemain, -1h (07:30) et -40 (07:50) aujourd'hui
+        val morning = at("2026-11-12T07:15")
+        val c = cal(
+            "UID:a\nDTSTART;TZID=Europe/Paris:20261112T083000\nSUMMARY:Jeudi",
+            "UID:b\nDTSTART;TZID=Europe/Paris:20261113T100000\nSUMMARY:Vendredi",
+        )
+        val evs = parse(c, morning)
+        assertEquals(at("2026-11-13T08:30"), Planner.next(evs, 90, morning)!!.alarm)
+        assertEquals(at("2026-11-12T07:30"), Planner.next(evs, 60, morning)!!.alarm)
+        assertEquals(at("2026-11-12T07:50"), Planner.next(evs, 40, morning)!!.alarm)
+    }
+
+    @Test fun skippedDayHasNoAlarm() {
+        val c = cal(
+            "UID:a\nDTSTART;TZID=Europe/Paris:20261112T080000\nSUMMARY:Jeudi (grève)",
+            "UID:b\nDTSTART;TZID=Europe/Paris:20261113T100000\nSUMMARY:Vendredi",
+        )
+        val p = Planner.next(parse(c, now), 60, now, setOf(java.time.LocalDate.of(2026, 11, 12)))!!
+        assertEquals("Vendredi", p.summary)
+    }
+
+    @Test fun weekViewListsAllClassesWithEndAndRoom() {
+        val c = cal(
+            "UID:a\nDTSTART;TZID=Europe/Paris:20261112T140000\nDTEND;TZID=Europe/Paris:20261112T160000\nSUMMARY:Aprem\nLOCATION:Salle 204",
+            "UID:b\nDTSTART;TZID=Europe/Paris:20261112T083000\nDTEND;TZID=Europe/Paris:20261112T103000\nSUMMARY:Matin",
+        )
+        val today = java.time.LocalDate.of(2026, 11, 11)
+        val week = Planner.week(parse(c, now), listOf(90, 60, 40), today, setOf(today.plusDays(1)))
+        assertEquals(7, week.size)
+        assertTrue(week[0].events.isEmpty())
+        val thu = week[1]
+        assertTrue(thu.skipped)
+        assertEquals(listOf("Matin", "Aprem"), thu.events.map { it.summary })
+        assertEquals(at("2026-11-12T10:30"), thu.events[0].end)
+        assertEquals("Salle 204", thu.events[1].location)
+        assertEquals(listOf(at("2026-11-12T07:00"), at("2026-11-12T07:30"), at("2026-11-12T07:50")), thu.alarms)
+    }
+
+    @Test fun recurringEventKeepsDuration() {
+        val c = cal("UID:r\nDTSTART;TZID=Europe/Paris:20261105T080000\nDTEND;TZID=Europe/Paris:20261105T093000\nRRULE:FREQ=WEEKLY\nSUMMARY:X")
+        val e = parse(c, now).first()
+        assertEquals(at("2026-11-12T09:30"), e.end)
+    }
+
+    @Test fun offsetInputParsing() {
+        assertEquals(90, Offsets.parse("1h30"))
+        assertEquals(60, Offsets.parse("1H"))
+        assertEquals(40, Offsets.parse("40"))
+        assertEquals(40, Offsets.parse(" 40 min"))
+        assertEquals(125, Offsets.parse("2h05"))
+        assertNull(Offsets.parse("1h75"))
+        assertNull(Offsets.parse("abc"))
+        assertNull(Offsets.parse("900"))
+        assertEquals("1h30", Offsets.format(90))
+        assertEquals("1h", Offsets.format(60))
+        assertEquals("40 min", Offsets.format(40))
+        assertEquals("2h05", Offsets.format(125))
+    }
+
     @Test fun htmlPageIsRejected() {
         assertTrue(runCatching { parse("<html>Connexion requise</html>", now) }.exceptionOrNull() is IcalException)
     }

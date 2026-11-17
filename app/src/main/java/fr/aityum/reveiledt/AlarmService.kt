@@ -31,19 +31,20 @@ class AlarmService : Service() {
         when (intent?.action) {
             ACTION_STOP -> finish()
             ACTION_SNOOZE -> {
-                AlarmScheduler.snooze(this, SNOOZE_MIN)
+                AlarmScheduler.snooze(this, SNOOZE_MIN, info)
                 finish()
             }
-            else -> ring()
+            else -> ring(intent?.getStringExtra(AlarmScheduler.EXTRA_INFO) ?: "Réveil")
         }
         return START_NOT_STICKY
     }
 
-    private fun ring() {
-        val p = Prefs(this)
-        val info = if (p.classAt > 0) "1er cours à ${StatusNotif.hm(p.classAt)} · ${p.summary.orEmpty()}" else "Réveil"
+    private var info: String? = null
+
+    private fun ring(text: String) {
+        info = text
         ServiceCompat.startForeground(
-            this, NOTIF_ID, notification(info),
+            this, NOTIF_ID, notification(text),
             if (Build.VERSION.SDK_INT >= 29) ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK else 0,
         )
         // l'écran de réveil s'ouvre via le full-screen intent de la notification
